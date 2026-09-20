@@ -74,6 +74,18 @@ def fmt_size(n):
     return f'{n}B'
 
 
+def fmt_time(seconds):
+    if seconds is None or seconds < 0:
+        return '--:--'
+    seconds = int(seconds)
+    if seconds >= 3600:
+        hours, seconds = divmod(seconds, 3600)
+        minutes, seconds = divmod(seconds, 60)
+        return f'{hours}:{minutes:02d}:{seconds:02d}'
+    minutes, seconds = divmod(seconds, 60)
+    return f'{minutes:02d}:{seconds:02d}'
+
+
 def bar_glyphs():
     enc = (sys.stdout.encoding or '').lower().replace('-', '')
     if enc.startswith('utf') or enc == 'cp65001':
@@ -81,15 +93,24 @@ def bar_glyphs():
     return '#', '-'
 
 
-def show_progress(done, total):
+def show_progress(done, total, elapsed):
     filled_ch, empty_ch = bar_glyphs()
     if total:
         frac = min(done / total, 1.0)
         filled = int(BAR_WIDTH * frac)
         bar = filled_ch * filled + empty_ch * (BAR_WIDTH - filled)
-        line = f'[{bar}] {100 * frac:3.0f}% {fmt_size(done)}/{fmt_size(total)}'
+        line = f'{bar} {100 * frac:3.0f}% {fmt_size(done)}/{fmt_size(total)}'
     else:
         line = f'{fmt_size(done)}'
+    if elapsed > 0 and done > 0:
+        rate = done / elapsed
+        if total and done < total:
+            eta = (total - done) / rate
+        elif total:
+            eta = 0
+        else:
+            eta = None
+        line += f' [{fmt_time(elapsed)}<{fmt_time(eta)}, {fmt_size(rate)}/s]'
     cols = shutil.get_terminal_size(fallback=(80, 24)).columns
     if len(line) >= cols:
         print('\r' + line[:cols], end='', flush=True)
@@ -105,6 +126,7 @@ def download_file(url, dest_path):
         with open_url(url, timeout=300) as response:
             total_size = int(response.headers.get('Content-Length', 0))
             done = 0
+            started = time.monotonic()
             with open(part_path, 'wb') as f:
                 while True:
                     chunk = response.read(CHUNK_SIZE)
@@ -112,8 +134,8 @@ def download_file(url, dest_path):
                         break
                     f.write(chunk)
                     done += len(chunk)
-                    show_progress(done, total_size)
-                show_progress(done, total_size)
+                    show_progress(done, total_size, time.monotonic() - started)
+                show_progress(done, total_size, time.monotonic() - started)
                 f.flush()
                 os.fsync(f.fileno())
         os.replace(part_path, dest_path)
