@@ -2,8 +2,10 @@
 """Pull files from a LAN mailbox and delete them after a matching hash.
 
   python download.py hp
+  python download.py 192.168.1.5
 
-Saves into from_hp/. Server: http://hp.lan:8009/
+Short name → http://hp.lan:8009/ and from_hp/.
+A name with a dot is used as-is (IP or DNS).
 """
 import argparse
 import hashlib
@@ -149,14 +151,15 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Download files from a host.')
     parser.add_argument(
         'host',
-        help='Host name used in URL and download dir',
+        help='Short name (adds .lan) or IP/DNS with a dot',
     )
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    server_url = f'http://{args.host}.lan:{SERVER_PORT}/'
+    host = args.host if '.' in args.host else f'{args.host}.lan'
+    server_url = f'http://{host}:{SERVER_PORT}/'
     download_dir = f'from_{args.host}'
 
     os.makedirs(download_dir, exist_ok=True)
