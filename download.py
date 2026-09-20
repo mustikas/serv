@@ -14,7 +14,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin
 
 CHUNK_SIZE = 4 * 1024 * 1024
 SERVER_PORT = 8009
@@ -167,7 +167,7 @@ def main():
         return
 
     for filename in files:
-        file_url = urljoin(server_url, filename)
+        file_url = urljoin(server_url, quote(filename))
         dest_path = os.path.join(download_dir, filename)
         print(filename)
         try:
