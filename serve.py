@@ -8,6 +8,7 @@ import hashlib
 import http.server
 import json
 import os
+import socket
 import socketserver
 import urllib.parse
 
@@ -54,6 +55,17 @@ def resolve_in_directory(root, relpath):
 def file_identity(filepath):
     st = os.stat(filepath)
     return st.st_mtime_ns, st.st_size
+
+
+def local_ipv4():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.connect(('1.1.1.1', 80))
+        return sock.getsockname()[0]
+    except OSError:
+        return '127.0.0.1'
+    finally:
+        sock.close()
 
 
 class CustomHandler(http.server.SimpleHTTPRequestHandler):
@@ -175,5 +187,5 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     os.chdir(DIRECTORY)
     with socketserver.TCPServer(("", PORT), CustomHandler) as httpd:
-        print(f"Serving HTTP on port {PORT} (directory: {DIRECTORY})")
+        print(f"Serving HTTP on {local_ipv4()}:{PORT} (directory: {DIRECTORY})")
         httpd.serve_forever()
