@@ -21,15 +21,10 @@ from urllib.parse import quote, urljoin
 CHUNK_SIZE = 4 * 1024 * 1024
 SERVER_PORT = 8009
 BAR_WIDTH = 28
-STATUS_HASHING = 'Hashing...'
+STATUS_HASHING = '  Hashing...'
 STATUS_DELETING = ' Deleting...'
 STATUS_DONE = ' Done.'
 STATUS_FAILED = ' Failed.'
-STATUS_WIDTH = max(
-    len(STATUS_HASHING + STATUS_DELETING + STATUS_DONE),
-    len(STATUS_HASHING + STATUS_DELETING + STATUS_FAILED),
-)
-STATUS_GAP = 2
 
 
 def new_hasher():
@@ -86,11 +81,6 @@ def bar_glyphs():
     return '#', '-'
 
 
-def left_column_width():
-    cols = shutil.get_terminal_size(fallback=(80, 24)).columns
-    return max(20, cols - STATUS_WIDTH - STATUS_GAP)
-
-
 def show_progress(done, total):
     filled_ch, empty_ch = bar_glyphs()
     if total:
@@ -100,8 +90,12 @@ def show_progress(done, total):
         line = f'[{bar}] {100 * frac:3.0f}% {fmt_size(done)}/{fmt_size(total)}'
     else:
         line = f'{fmt_size(done)}'
-    width = left_column_width()
-    print('\r' + line[:width].ljust(width), end='', flush=True)
+    cols = shutil.get_terminal_size(fallback=(80, 24)).columns
+    if len(line) >= cols:
+        print('\r' + line[:cols], end='', flush=True)
+        return
+    pad = cols - len(line) - 1
+    print('\r' + line + ' ' * pad + '\r' + line, end='', flush=True)
 
 
 def download_file(url, dest_path):
@@ -172,6 +166,7 @@ def main():
     for filename in files:
         file_url = urljoin(server_url, quote(filename))
         dest_path = os.path.join(download_dir, filename)
+        print()
         print(filename)
         try:
             download_file(file_url, dest_path)
