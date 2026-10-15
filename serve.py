@@ -10,6 +10,7 @@ import json
 import os
 import socket
 import socketserver
+import time
 import urllib.parse
 
 PORT = 8009
@@ -82,7 +83,8 @@ def lan_hostname():
 
 class CustomHandler(http.server.SimpleHTTPRequestHandler):
     def log_action(self, message):
-        print(f'{self.client_address[0]}  {message}', flush=True)
+        stamp = time.strftime('%H:%M:%S')
+        print(f'{stamp}  {self.client_address[0]}  {message}', flush=True)
 
     def do_GET(self):
         parsed_path = urllib.parse.urlparse(self.path)
