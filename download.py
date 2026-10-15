@@ -163,6 +163,19 @@ def delete_file_on_server(file_url, file_hash):
         return False
 
 
+def unique_dest_path(path):
+    """If path exists, use name-1.ext, name-2.ext, ..."""
+    if not os.path.exists(path):
+        return path
+    root, ext = os.path.splitext(path)
+    n = 1
+    while True:
+        candidate = f'{root}-{n}{ext}'
+        if not os.path.exists(candidate):
+            return candidate
+        n += 1
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Download files from a host.')
     parser.add_argument(
@@ -187,9 +200,23 @@ def main():
 
     for filename in files:
         file_url = urljoin(server_url, quote(filename))
-        dest_path = os.path.join(download_dir, filename)
+        preferred_path = os.path.join(download_dir, filename)
         print()
         print(filename)
+
+        if os.path.isfile(preferred_path):
+            print(STATUS_HASHING, end='', flush=True)
+            local_hash = hash_file(preferred_path)
+            print(STATUS_DELETING, end='', flush=True)
+            if delete_file_on_server(file_url, local_hash):
+                print(STATUS_DONE)
+                continue
+            print(STATUS_FAILED)
+            dest_path = unique_dest_path(preferred_path)
+            print(f'{filename} -> {os.path.basename(dest_path)}')
+        else:
+            dest_path = preferred_path
+
         try:
             download_file(file_url, dest_path)
         except Exception as e:
