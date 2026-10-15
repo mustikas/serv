@@ -68,6 +68,18 @@ def local_ipv4():
         sock.close()
 
 
+def lan_hostname():
+    name = socket.gethostname().strip()
+    if not name:
+        return None
+    host = f'{name}.lan'
+    try:
+        socket.getaddrinfo(host, None)
+    except socket.gaierror:
+        return None
+    return host
+
+
 class CustomHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         parsed_path = urllib.parse.urlparse(self.path)
@@ -187,5 +199,10 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     os.chdir(DIRECTORY)
     with socketserver.TCPServer(("", PORT), CustomHandler) as httpd:
-        print(f"Serving HTTP on {local_ipv4()}:{PORT} (directory: {DIRECTORY})")
+        ip = local_ipv4()
+        name = lan_hostname()
+        if name:
+            print(f"Serving HTTP on {name}:{PORT} and {ip}:{PORT} (directory: {DIRECTORY})")
+        else:
+            print(f"Serving HTTP on {ip}:{PORT} (directory: {DIRECTORY})")
         httpd.serve_forever()
