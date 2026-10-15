@@ -6,6 +6,9 @@
 
 Short name → http://hp.lan:8009/ and from_hp/.
 A name with a dot is used as-is (IP or DNS).
+
+wget https://raw.githubusercontent.com/mustikas/serv/main/serve.py
+wget https://raw.githubusercontent.com/mustikas/serv/main/download.py
 """
 import argparse
 import hashlib
