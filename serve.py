@@ -4,8 +4,8 @@
 
 Listens on port 8009. Clients GET files, then DELETE with a matching hash.
 
-wget https://raw.githubusercontent.com/mustikas/serv/main/serve.py
-wget https://raw.githubusercontent.com/mustikas/serv/main/download.py
+wget -O serve.py https://raw.githubusercontent.com/mustikas/serv/main/serve.py
+wget -O download.py https://raw.githubusercontent.com/mustikas/serv/main/download.py
 """
 import hashlib
 import http.server
